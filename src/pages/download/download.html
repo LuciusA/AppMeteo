@@ -1,5 +1,8 @@
-<ion-content padding>
-  <div padding>
+<ion-header>
+  <ion-navbar>
+    <ion-title>Files</ion-title>
+  </ion-navbar>
+  <ion-toolbar no-border-top>
     <ion-segment [(ngModel)]="files">
       <ion-segment-button value="downloads">
         Downloads
@@ -8,19 +11,30 @@
         Downloaded
       </ion-segment-button>
     </ion-segment>
-  </div>
-
+  </ion-toolbar>
+</ion-header>
+<ion-content padding>
   <div [ngSwitch]="files">
     <ion-list *ngSwitchCase="'downloaded'">
-      <ion-item *ngFor="let downloaded of downloadeds" >
-          {{downloaded}}
-      </ion-item>
+      <ion-item-sliding *ngFor="let downloaded of downloadeds">
+        <ion-item (click)="openData(downloaded.name)">
+          {{downloaded.name}}
+        </ion-item>
+        <ion-item-options side="right">
+          <button ion-button color="danger" (click)="deleteFile(downloaded.name, 'right')">Delete</button>
+        </ion-item-options>
+      </ion-item-sliding>
     </ion-list>
 
     <ion-list *ngSwitchCase="'downloads'">
-      <ion-item *ngFor="let download of downloads" (click)="readFile(download.name)">
+      <ion-item-sliding *ngFor="let download of downloads">
+        <ion-item (click)="readFile(download.name)">
           {{download.name}}
-      </ion-item>
+        </ion-item>
+        <ion-item-options side="right">
+          <button ion-button color="danger" (click)="deleteFile(download.name, 'left')">Delete</button>
+        </ion-item-options>
+      </ion-item-sliding>
     </ion-list>
   </div>
 </ion-content>

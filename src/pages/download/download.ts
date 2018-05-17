@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { File } from '@ionic-native/file';
-import { NavController, Platform } from 'ionic-angular';
+import { NavController, Platform, ToastController } from 'ionic-angular';
+import { GraphPage } from "../graph/graph";
 
 @Component({
   selector: 'page-download',
@@ -14,26 +15,27 @@ export class DownloadPage {
   constructor(
     public navCtrl: NavController,
     public fileNavigator: File,
-    public plt: Platform
+    public plt: Platform,
+    public toastCtrl: ToastController
   ) {
     plt.ready().then(() => {
-      this.listDir(
-        this.fileNavigator.applicationDirectory,
-        'www/assets/files/'
-      );
+      this.listDir();
     });
   }
 
-  listDir(path, dirName) {
-    console.log('couocui');
-    this.fileNavigator
-      .listDir(path, dirName)
-      .then(entries => {
-        this.downloads = entries;
-        var str = JSON.stringify(entries, null, 4);
-        console.log(str);
-      })
-      .catch(this.handleError);
+  async listDir() {
+    try {
+      this.downloads = await this.fileNavigator.listDir(
+        this.fileNavigator.applicationDirectory,
+        'www/assets/files/'
+      );
+      this.downloadeds = await this.fileNavigator.listDir(
+        this.fileNavigator.applicationDirectory,
+        'www/assets/downloaded/'
+      );
+    } catch (e) {
+      console.log(JSON.stringify(e));
+    }
   }
 
   handleError(error) {
@@ -51,18 +53,63 @@ export class DownloadPage {
     let dateName = dateHour[0].split(' ');
 
     try {
-    const newFile = await this.fileNavigator
-      .copyFile(
+      const newFile = await this.fileNavigator.copyFile(
         this.fileNavigator.applicationDirectory + '/www/assets/files/',
         fileName,
-        this.fileNavigator.applicationDirectory + '/www/assets/files/',
+        this.fileNavigator.applicationDirectory + '/www/assets/downloaded/',
         dateName[0]
-      )
-      this.downloads.push(newFile);
-
-     }catch(e){
-       let str = JSON.stringify(e);
+      );
+      this.downloadeds.push(newFile);
+      this.showToast('Your file was successfully downloaded');
+    } catch (e) {
+      let str = JSON.stringify(e);
       console.log(str);
+      this.showToast('File already downloaded');
     }
+  }
+
+  async deleteFile(fileName, page) {
+    try {
+      if (page == 'left') {
+        await this.fileNavigator.removeFile(
+          this.fileNavigator.applicationDirectory + '/www/assets/files/',
+          fileName
+        );
+        this.listDir();
+        this.showToast('Your file was successfully deleted');
+      } else {
+        await this.fileNavigator.removeFile(
+          this.fileNavigator.applicationDirectory + '/www/assets/downloaded/',
+          fileName
+        );
+        this.listDir();
+        this.showToast('Your file was successfully deleted');
+      }
+    } catch (e) {
+      console.log(JSON.stringify(e));
+    }
+  }
+
+  openData(fileName) {
+    console.log(fileName);
+    this.navCtrl.push(GraphPage, {fileName: fileName});
+    return fileName;
+  }
+
+  showToast(message) {
+    const toast = this.toastCtrl.create({
+      message: message,
+      duration: 2000,
+      position: 'bottom',
+      showCloseButton: true,
+      closeButtonText: 'Ok',
+      dismissOnPageChange: true
+    });
+    toast.onDidDismiss(this.dismissHandler);
+    toast.present();
+  }
+
+  private dismissHandler() {
+    console.info('Toast onDidDismiss()');
   }
 }
