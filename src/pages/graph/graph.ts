@@ -1,31 +1,32 @@
 import { Component } from '@angular/core';
 import { File } from '@ionic-native/file';
-//import * as HighCharts from 'highcharts';
-import { IonicPage, LoadingController, NavController, NavParams, Platform } from 'ionic-angular';
-
-@IonicPage()
+import { LoadingController, NavController, NavParams, Platform } from 'ionic-angular';
+import { FileProvider, graphHeaders } from '../../providers/file/file';
 @Component({
   selector: 'page-graph',
   templateUrl: 'graph.html'
 })
 export class GraphPage {
   chartOptions: any;
-  //myChart;
-  //private init: any;
+  dataTypes;
+  type: any;
+  private posColumns: number[] = [];
+  graphHeadersKeys: any[] = [];
 
   constructor(
     public navCtrl: NavController,
     public navParams: NavParams,
     public plt: Platform,
     public fileNavigator: File,
-    public loadingCtrl: LoadingController
+    public loadingCtrl: LoadingController,
+    public fileProvider: FileProvider
   ) {
+
     const fileName = navParams.get('fileName');
     this.addDataToGraph(fileName).then(dataFile => {
-      console.log(JSON.stringify(dataFile[7][2]));
-      console.log(JSON.stringify(dataFile[7][3]));
-      console.log(JSON.stringify(dataFile[7][4]));
-      this.chartOptions = {
+      console.log(JSON.stringify(this.graphHeadersKeys));
+      this.graphHeadersKeys;
+      /*this.chartOptions = {
         chart: {
           type: 'bar'
         },
@@ -43,20 +44,27 @@ export class GraphPage {
         series: [
           {
             name: dataFile['headers'][2],
-            data: [parseInt(dataFile[7][2]), parseInt(dataFile[7][3]), parseInt(dataFile[7][4])]
+            data: [
+              parseInt(dataFile[7][2]),
+              parseInt(dataFile[7][3]),
+              parseInt(dataFile[7][4])
+            ]
           },
           {
             name: dataFile['headers'][5],
-            data: [parseInt(dataFile[9][2]), parseInt(dataFile[9][3]), parseInt(dataFile[9][4])]
+            data: [
+              parseInt(dataFile[9][2]),
+              parseInt(dataFile[9][3]),
+              parseInt(dataFile[9][4])
+            ]
           }
         ]
-      };
+      };*/
     });
   }
 
   async addDataToGraph(fileName) {
-    const tableData = await this.getDataFile(fileName);
-    return tableData;
+    return await this.getDataFile(fileName);
   }
 
   getDataFile(fileName) {
@@ -64,60 +72,91 @@ export class GraphPage {
       spinner: 'ios',
       content: 'Extrating data ...'
     });
-    return new Promise(resolve => {
+    return new Promise(async resolve => {
       loader.present();
-      this.fileNavigator
-        .readAsText(
-          this.fileNavigator.applicationDirectory + '/www/assets/downloaded/',
-          fileName
-        )
-        .then(fileOpened => {
-          const lines = fileOpened.split('\n');
-          const headers = lines[1].split('\t');
-          const tableData = {};
-          tableData['headers'] = headers;
+      let fileOpened = await this.fileNavigator.readAsText(
+        this.fileNavigator.applicationDirectory + '/www/assets/downloaded/',
+        fileName
+      );
+      const lines = fileOpened.split('\n');
+      const headers = lines[1].split('\t');
 
-          //this.init(lines[2].split('\t'), headers);
+      this.graphHeadersKeys = Object.keys(graphHeaders);
 
-          for (let i = 2; i < lines.length - 1; i++) {
-            let segment = lines[i].split('\t');
-            tableData[i] = segment;
+      headers.forEach((header, i) => {
+        this.graphHeadersKeys.forEach(dataPerHeader => {
+          if (header == dataPerHeader) {
+            this.posColumns[header] = i;
+            this.fileProvider.minVal[header] = parseFloat(lines[2].split('\t')[i]);
+            this.fileProvider.maxVal[header] = parseFloat(lines[2].split('\t')[i]);
           }
-          //console.log(JSON.stringify(tableData));
-          console.log('DONE!');
-          loader.dismiss();
-          resolve(tableData);
         });
+      });
+
+      for (let i = 2; i < lines.length - 1; i++) {
+        let segment = lines[i].split('\t');
+        let nextSegment = lines[i + 1] ? lines[i + 1].split('\t') : {};
+        this.graphHeadersKeys.forEach(val => {
+          if (val !== 'CREATEDATE') {
+            let intVal = parseFloat(segment[this.posColumns[graphHeaders[val]]]);
+            if (intVal == null)
+              intVal = 0;
+            if (intVal < this.fileProvider.minVal[graphHeaders[val]])
+              this.fileProvider.minVal[graphHeaders[val]] = intVal;
+            if (intVal > this.fileProvider.maxVal[graphHeaders[val]])
+              this.fileProvider.maxVal[graphHeaders[val]] = intVal;
+          }
+        });
+
+        //this.getDataByHeaders(this.fileProvider, i, segment);
+
+        //this.fileProvider.minVal[i] = this.fileProvider.dataColumns[i][this.fileProvider.headers[k]]
+      }
+
+      console.log(
+        JSON.stringify(this.fileProvider.minVal[graphHeaders.AIR_TEMPERATURE])
+      );
+      console.log(
+        JSON.stringify(this.fileProvider.maxVal[graphHeaders.AIR_TEMPERATURE])
+      );
+      console.log(
+        JSON.stringify(this.fileProvider.minVal[graphHeaders.AIR_PRESSURE])
+      );
+      console.log(
+        JSON.stringify(this.fileProvider.maxVal[graphHeaders.AIR_PRESSURE])
+      );
+      console.log(
+        JSON.stringify(this.fileProvider.minVal[graphHeaders.LOCAL_WD_2MIN_MNM])
+      );
+      console.log(
+        JSON.stringify(this.fileProvider.maxVal[graphHeaders.LOCAL_WD_2MIN_MNM])
+      );
+      console.log(
+        JSON.stringify(this.fileProvider.minVal[graphHeaders.LOCAL_WS_2MIN_MNM])
+      );
+      console.log(
+        JSON.stringify(this.fileProvider.maxVal[graphHeaders.LOCAL_WS_2MIN_MNM])
+      );
+      console.log(
+        JSON.stringify(this.fileProvider.minVal[graphHeaders.REL_HUMIDITY])
+      );
+      console.log(
+        JSON.stringify(this.fileProvider.maxVal[graphHeaders.REL_HUMIDITY])
+      );
+
+      loader.dismiss();
+      resolve(this.fileProvider);
     });
   }
 
-  // ionViewDidLoad() {
-  //   console.log('ionViewDidLoad SecondPage');
-  //   this.myChart = HighCharts.chart('container', {
-  //     chart: {
-  //       type: 'line'
-  //     },
-  //     title: {
-  //       text: 'Données météorologiques'
-  //     },
-  //     xAxis: {
-  //       categories: ['1', '2', '3', '4', '5']
-  //     },
-  //     yAxis: {
-  //       title: {
-  //         text: 'Euro'
-  //       }
-  //     },
-  //     series: [
-  //       {
-  //         name: 'Jane',
-  //         data: [1, 0, 4, 6, 19, 34, 10937]
-  //       },
-  //       {
-  //         name: 'John',
-  //         data: [5, 7, 3, 367, 392]
-  //       }
-  //     ]
-  //   });
-  // }
+  getSelectVal() {
+    console.log(this.type);
+  }
+
+  getDataByHeaders(fileProvider, i, segment) {
+    for (let j in this.fileProvider.headers) {
+      this.fileProvider.dataColumns[i][this.fileProvider.headers[j]] =
+        segment[j];
+    }
+  }
 }
