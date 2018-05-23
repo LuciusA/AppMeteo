@@ -91,7 +91,6 @@ export class DownloadPage {
   }
 
   openData(fileName) {
-    console.log(fileName);
     this.navCtrl.push(GraphPage, {fileName: fileName});
     return fileName;
   }

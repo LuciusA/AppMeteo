@@ -7,13 +7,35 @@
 </ion-header>
 
 <ion-content>
-    <ion-list>
-        <ion-item>
-          <ion-label>Choose Data</ion-label>
-          <ion-select [(ngModel)]="type" (ionChange) = "getSelectVal()">
-            <ion-option *ngFor="let dataType of graphHeadersKeys" value="dataType">{{dataType}}</ion-option>
-          </ion-select>
-        </ion-item>
-      </ion-list>
-    <chart [options]="chartOptions" type="chart" style="display: block;"></chart>
+  <ion-list>
+    <ion-item>
+      <ion-label>Choose Data</ion-label>
+      <ion-select [(ngModel)]="type" (ionChange)="getSelectVal()">
+        <ion-option *ngFor="let dataType of graphHeadersKeys" [value]="dataType">{{dataType}}</ion-option>
+      </ion-select>
+    </ion-item>
+  </ion-list>
+  <table style="border:solid 1px">
+    <thead>
+      <tr style="border:solid 1px">
+        <th style="border:solid 1px">Nom de l'analyse</th>
+        <th style="border:solid 1px">Min</th>
+        <th style="border:solid 1px">Heure du min</th>
+        <th style="border:solid 1px">Moyenne de la journée</th>
+        <th style="border:solid 1px">Max</th>
+        <th style="border:solid 1px">Heure du max</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let header of graphHeadersKeys; let i = index" style="border:solid 1px">
+        <td style="border:solid 1px">{{header}}</td>
+        <td style="border:solid 1px">{{minVal[i]}}</td>
+        <td style="border:solid 1px">{{minHour[i]}}</td>
+        <td style="border:solid 1px">{{averageData[i]}}</td>
+        <td style="border:solid 1px">{{maxVal[i]}}</td>
+        <td style="border:solid 1px">{{maxHour[i]}}</td>
+      </tr>
+    </tbody>
+  </table>
+  <chart [options]="chartOptions" type="chart" style="display: block;"></chart>
 </ion-content>

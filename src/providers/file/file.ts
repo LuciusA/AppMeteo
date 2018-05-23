@@ -1,4 +1,3 @@
-
 import { Injectable } from '@angular/core';
 
 /*
@@ -19,13 +18,9 @@ export let graphHeaders = {
 @Injectable()
 export class FileProvider {
   headers: any[] = [];
-  dataColumns: any;
   minVal: any[] = [];
   maxVal: any[] = [];
-  posColumns: any[] = [];
+  lines: any[] = [];
 
-  constructor() {
-    console.log('Hello FileProvider Provider');
-  }
-
+  constructor() {}
 }
