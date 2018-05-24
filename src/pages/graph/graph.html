@@ -15,7 +15,7 @@
       </ion-select>
     </ion-item>
   </ion-list>
-  <table style="border:solid 1px">
+  <table style="border:solid 1px; display: block; margin: 0 auto;">
     <thead>
       <tr style="border:solid 1px">
         <th style="border:solid 1px">Nom de l'analyse</th>
@@ -38,4 +38,5 @@
     </tbody>
   </table>
   <chart [options]="chartOptions" type="chart" style="display: block;"></chart>
+  <chart [options]="timeSeriesOptions" type="chart" style="display: block;"></chart>
 </ion-content>
