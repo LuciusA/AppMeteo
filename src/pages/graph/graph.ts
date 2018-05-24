@@ -57,38 +57,122 @@ export class GraphPage {
       this.graphHeadersKeys.splice(4, 1);
       if (!this.type) this.type = this.graphHeadersKeys[0];
       console.log(this.graphHeadersKeys[1]);
+      let min = [];
+      let max = [];
+      let avg = [];
+      let minDay;
+      let maxDay;
+      let avgDay;
+      let titleYAxis;
       if (this.type == 'AIR_PRESSURE') {
-        let dataSeries = [];
+        titleYAxis = 'hPa';
+        minDay = Math.round(this.minVal[0]);
+        maxDay = Math.round(this.maxVal[0]);
+        avgDay = Math.round(this.averageData[0]);
+
         for (let i = 0; i < 24; i++) {
-          dataSeries.push(this.minPresPerHour[i]);
+          min.push(this.minPresPerHour[i]);
+          max.push(this.maxPresPerHour[i]);
+          avg.push(this.averagePresPerHour[i]);
         }
-        this.chartOptions = {
-          chart: {
-            type: 'line'
-          },
+      }
+      if (this.type == 'AIR_TEMPERATURE') {
+        titleYAxis = '° Celsius';
+        minDay = Math.round(this.minVal[1]);
+        maxDay = Math.round(this.maxVal[1]);
+        avgDay = Math.round(this.averageData[1]);
+
+        for (let i = 0; i < 24; i++) {
+          min.push(this.minTempPerHour[i]);
+          max.push(this.maxTempPerHour[i]);
+          avg.push(this.averageTempPerHour[i]);
+        }
+      }
+      if (this.type == 'REL_HUMIDITY') {
+        titleYAxis = '%';
+        minDay = Math.round(this.minVal[2]);
+        maxDay = Math.round(this.maxVal[2]);
+        avgDay = Math.round(this.averageData[2]);
+
+        for (let i = 0; i < 24; i++) {
+          min.push(this.minRelPerHour[i]);
+          max.push(this.maxRelPerHour[i]);
+          avg.push(this.averageRelPerHour[i]);
+        }
+      }
+      if (this.type == 'LOCAL_WS_2MIN_MNM') {
+        titleYAxis = 'nd';
+        minDay = Math.round(this.minVal[4]);
+        maxDay = Math.round(this.maxVal[4]);
+        avgDay = Math.round(this.averageData[4]);
+
+        for (let i = 0; i < 24; i++) {
+          min.push(this.minLocPerHour[i]);
+          max.push(this.maxLocPerHour[i]);
+          avg.push(this.averageLocPerHour[i]);
+        }
+      }
+      this.chartOptions = {
+        chart: {
+          type: 'line'
+        },
+        title: {
+          text: this.type
+        },
+        xAxis: {
           title: {
-            text: this.type
+            text: 'Hours'
+          }
+        },
+        yAxis: {
+          title: {
+            text: titleYAxis
           },
-          xAxis: {
-            categories: ['1', '2', '3', '4']
-          },
-          yAxis: {
-            title: {
-              text: 'Euro'
-            }
-          },
-          series: [
+          plotLines: [
             {
-              name: 'Min per hour',
-              data: dataSeries
+              value: minDay,
+              color: 'blue',
+              dashStyle: 'shortdash',
+              width: 2,
+              label: {
+                text: 'Min of Day'
+              }
             },
             {
-              name: 'Max per hour',
-              data: [this.maxPresPerHour]
+              value: maxDay,
+              color: 'red',
+              dashStyle: 'shortdash',
+              width: 2,
+              label: {
+                text: 'Max of Day'
+              }
+            },
+            {
+              value: avgDay,
+              color: 'yellow',
+              dashStyle: 'shortdash',
+              width: 2,
+              label: {
+                text: 'Average of Day'
+              }
             }
           ]
-        };
-      }
+        },
+        series: [
+          {
+            name: 'Min per hour',
+            data: min
+          },
+          {
+            name: 'Max per hour',
+            data: max
+          },
+          {
+            name: 'Average per hour',
+            data: avg
+          }
+        ]
+      };
     });
   }
 
@@ -212,6 +296,7 @@ export class GraphPage {
           ) +
           '°)'
       );
+      this.averageData.push(Math.round(this.locWSData.reduce((a, b) => a + b, 0) / this.locWSData.length));
 
       this.minVal.push(this.fileProvider.minVal[graphHeaders.AIR_PRESSURE]);
       this.minVal.push(this.fileProvider.minVal[graphHeaders.AIR_TEMPERATURE]);
@@ -222,6 +307,7 @@ export class GraphPage {
           this.fileProvider.minVal[graphHeaders.LOCAL_WD_2MIN_MNM] +
           '°)'
       );
+      this.minVal.push(this.fileProvider.minVal[graphHeaders.LOCAL_WS_2MIN_MNM]);
 
       this.maxVal.push(this.fileProvider.maxVal[graphHeaders.AIR_PRESSURE]);
       this.maxVal.push(this.fileProvider.maxVal[graphHeaders.AIR_TEMPERATURE]);
@@ -232,6 +318,7 @@ export class GraphPage {
           this.fileProvider.maxVal[graphHeaders.LOCAL_WD_2MIN_MNM] +
           '°)'
       );
+      this.maxVal.push(this.fileProvider.maxVal[graphHeaders.LOCAL_WS_2MIN_MNM]);
 
       this.minHour.push(
         this.fileProvider.lines[this.posMin[graphHeaders.AIR_PRESSURE]][0]
