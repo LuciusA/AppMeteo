@@ -25,6 +25,18 @@ export class GraphPage {
   locWSData: any[] = [];
   locWDData: any[] = [];
   averageData: any[] = [];
+  averagePresPerHour: any[] = [];
+  averageTempPerHour: any[] = [];
+  averageRelPerHour: any[] = [];
+  averageLocPerHour: any[] = [];
+  minPresPerHour: any[] = [];
+  minTempPerHour: any[] = [];
+  minRelPerHour: any[] = [];
+  minLocPerHour: any[] = [];
+  maxPresPerHour: any[] = [];
+  maxTempPerHour: any[] = [];
+  maxRelPerHour: any[] = [];
+  maxLocPerHour: any[] = [];
 
   constructor(
     public navCtrl: NavController,
@@ -38,46 +50,45 @@ export class GraphPage {
   }
 
   drawChart() {
-    this.navParams.get('fileName');
+    //this.navParams.get('fileName');
     this.addDataToGraph().then(dataFile => {
       this.recapData = dataFile;
       this.graphHeadersKeys.splice(2, 1);
       this.graphHeadersKeys.splice(4, 1);
       if (!this.type) this.type = this.graphHeadersKeys[0];
-      /*this.chartOptions = {
-        chart: {
-          type: 'bar'
-        },
-        title: {
-          text: 'Données météorologiques'
-        },
-        xAxis: {
-          categories: ['1', '2', '3', '4']
-        },
-        yAxis: {
-          title: {
-            text: 'Euro'
-          }
-        },
-        series: [
-          {
-            name: dataFile['headers'][2],
-            data: [
-              parseInt(dataFile[7][2]),
-              parseInt(dataFile[7][3]),
-              parseInt(dataFile[7][4])
-            ]
+      console.log(this.graphHeadersKeys[1]);
+      if (this.type == 'AIR_PRESSURE') {
+        let dataSeries = [];
+        for (let i = 0; i < 24; i++) {
+          dataSeries.push(this.minPresPerHour[i]);
+        }
+        this.chartOptions = {
+          chart: {
+            type: 'line'
           },
-          {
-            name: dataFile['headers'][5],
-            data: [
-              parseInt(dataFile[9][2]),
-              parseInt(dataFile[9][3]),
-              parseInt(dataFile[9][4])
-            ]
-          }
-        ]
-      };*/
+          title: {
+            text: this.type
+          },
+          xAxis: {
+            categories: ['1', '2', '3', '4']
+          },
+          yAxis: {
+            title: {
+              text: 'Euro'
+            }
+          },
+          series: [
+            {
+              name: 'Min per hour',
+              data: dataSeries
+            },
+            {
+              name: 'Max per hour',
+              data: [this.maxPresPerHour]
+            }
+          ]
+        };
+      }
     });
   }
 
@@ -87,6 +98,7 @@ export class GraphPage {
 
   getDataFile() {
     const fileName = this.navParams.get('fileName');
+    console.log(fileName);
     let loader = this.loadingCtrl.create({
       spinner: 'ios',
       content: 'Extrating data ...'
@@ -119,13 +131,14 @@ export class GraphPage {
       for (let i = 2; i < lines.length - 1; i++) {
         let segment = lines[i].split('\t');
         this.fileProvider.lines[i] = segment;
-        //let nextSegment = lines[i + 1] ? lines[i + 1].split('\t') : {};
         this.graphHeadersKeys.forEach(val => {
           if (val !== 'CREATEDATE') {
             let intVal = parseFloat(
               segment[this.posColumns[graphHeaders[val]]]
             );
-            if (intVal == null) intVal = 0;
+            if (!intVal) {
+              intVal = 0;
+            }
             if (intVal < this.fileProvider.minVal[graphHeaders[val]]) {
               this.fileProvider.minVal[graphHeaders[val]] = intVal;
               this.posMin[graphHeaders[val]] = i;
@@ -138,14 +151,41 @@ export class GraphPage {
             if (val == 'AIR_TEMPERATURE') this.tempData.push(intVal);
             if (val == 'REL_HUMIDITY') this.relData.push(intVal);
             if (val == 'LOCAL_WS_2MIN_MNM') this.locWSData.push(intVal);
-            if (val == 'LOCAL_WD_2MIN_MNM') this.locWSData.push(intVal);
+            if (val == 'LOCAL_WD_2MIN_MNM') this.locWDData.push(intVal);
           }
         });
       }
-      // console.log(JSON.stringify(this.presData));
-      // console.log(JSON.stringify(this.tempData));
-      // console.log(JSON.stringify(this.relData));
-      // console.log(JSON.stringify(this.locData));
+
+      let start = 0;
+      let end = 720;
+      for (let i = 0; i < 24; i++) {
+        this.averagePresPerHour[i] = Math.round(
+          this.presData.slice(start, end).reduce((a, b) => a + b, 0) /
+            this.presData.slice(start, end).length
+        );
+        this.averageTempPerHour[i] = Math.round(
+          this.tempData.slice(start, end).reduce((a, b) => a + b, 0) /
+            this.tempData.slice(start, end).length
+        );
+        this.averageRelPerHour[i] = Math.round(
+          this.relData.slice(start, end).reduce((a, b) => a + b, 0) /
+            this.relData.slice(start, end).length
+        );
+        this.averageLocPerHour[i] = Math.round(
+          this.locWSData.slice(start, end).reduce((a, b) => a + b, 0) /
+            this.locWSData.slice(start, end).length
+        );
+        this.minPresPerHour[i] = Math.min(...this.presData.slice(start, end));
+        this.minTempPerHour[i] = Math.min(...this.tempData.slice(start, end));
+        this.minRelPerHour[i] = Math.min(...this.relData.slice(start, end));
+        this.minLocPerHour[i] = Math.min(...this.locWSData.slice(start, end));
+        this.maxPresPerHour[i] = Math.max(...this.presData.slice(start, end));
+        this.maxTempPerHour[i] = Math.max(...this.tempData.slice(start, end));
+        this.maxRelPerHour[i] = Math.max(...this.relData.slice(start, end));
+        this.maxLocPerHour[i] = Math.max(...this.locWSData.slice(start, end));
+        start = end;
+        end = end + 720;
+      }
 
       this.averageData.push(
         Math.round(
